@@ -8,17 +8,13 @@ import com.sparta.springlv4.entity.Memo;
 import com.sparta.springlv4.entity.User;
 import com.sparta.springlv4.entity.UserRoleEnum;
 import com.sparta.springlv4.repository.MemoRepository;
-import com.sparta.springlv4.repository.UserRepository;
 import com.sparta.springlv4.security.UserDetailsImpl;
-import com.sparta.springlv4.util.JwtUtil;
-import io.jsonwebtoken.Claims;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.servlet.http.HttpServletRequest;
 import java.util.List;
 import java.util.stream.Collectors;
 
