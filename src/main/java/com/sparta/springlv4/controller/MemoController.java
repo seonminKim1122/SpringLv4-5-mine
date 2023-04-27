@@ -4,8 +4,10 @@ import com.sparta.springlv4.dto.GeneralResponseDto;
 import com.sparta.springlv4.dto.MemoRequestDto;
 import com.sparta.springlv4.dto.MemoResponseDto;
 import com.sparta.springlv4.dto.StatusResponseDto;
+import com.sparta.springlv4.security.UserDetailsImpl;
 import com.sparta.springlv4.service.MemoService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
@@ -19,8 +21,8 @@ public class MemoController {
     private final MemoService memoService;
     // 게시글 작성하기
     @PostMapping("/create")
-    public GeneralResponseDto createMemo(@RequestBody MemoRequestDto requestDto, HttpServletRequest request) {
-        return memoService.createMemo(requestDto, request);
+    public GeneralResponseDto createMemo(@RequestBody MemoRequestDto requestDto, @AuthenticationPrincipal UserDetailsImpl userDetails) {
+        return memoService.createMemo(requestDto, userDetails);
     }
 
     // 전체 게시글 조회하기

@@ -9,6 +9,7 @@ import com.sparta.springlv4.entity.User;
 import com.sparta.springlv4.entity.UserRoleEnum;
 import com.sparta.springlv4.repository.MemoRepository;
 import com.sparta.springlv4.repository.UserRepository;
+import com.sparta.springlv4.security.UserDetailsImpl;
 import com.sparta.springlv4.util.JwtUtil;
 import io.jsonwebtoken.Claims;
 import lombok.RequiredArgsConstructor;
@@ -30,19 +31,12 @@ public class MemoService {
     private final MemoRepository memoRepository;
     private final UserRepository userRepository;
     @Transactional
-    public GeneralResponseDto createMemo(MemoRequestDto requestDto, HttpServletRequest request) {
-
-        try {
-            Claims claims = checkTokenAndGetInfo(request);
-            User user = findUserByName(claims.getSubject());
-            Memo memo = new Memo(requestDto);
-            memo.setUser(user);
-            memoRepository.save(memo);
-            return new MemoResponseDto(memo);
-        } catch (NullPointerException e) {
-            return new StatusResponseDto(e.getMessage(), HttpStatus.BAD_REQUEST);
-        }
-
+    public GeneralResponseDto createMemo(MemoRequestDto requestDto, UserDetailsImpl userDetails) {
+        User user = userDetails.getUser();
+        Memo memo = new Memo(requestDto);
+        memo.setUser(user);
+        memoRepository.save(memo);
+        return new MemoResponseDto(memo);
     }
 
     public List<MemoResponseDto> getAllMemo() {
