@@ -2,10 +2,12 @@ package com.sparta.springlv4.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.Setter;
 
 import javax.validation.constraints.Pattern;
 
 @Getter
+@Setter
 @AllArgsConstructor
 public class SignupRequestDto {
     @Pattern(regexp = "^[0-9a-z]{4,10}$", message = "4 ~ 10자 사이의 알파벳 소문자와 숫자만 가능합니다.")

@@ -9,6 +9,7 @@ import com.sparta.springlv4.repository.UserRepository;
 import com.sparta.springlv4.util.JwtUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,6 +23,7 @@ public class UserService {
     private final UserRepository userRepository;
     private final JwtUtil jwtUtil;
     private static final String ADMIN_TOKEN = "AAABnvxRVklrnYxKZ0aHgTBcXukeZygoC";
+    private final PasswordEncoder passwordEncoder;
 
     @Transactional
     public StatusResponseDto signup(SignupRequestDto signupRequestDto) {
@@ -39,6 +41,8 @@ public class UserService {
             role = UserRoleEnum.ADMIN;
         }
 
+        signupRequestDto.setPassword(passwordEncoder.encode(signupRequestDto.getPassword()));
+
         User user = new User(signupRequestDto, role);
         userRepository.save(user);
         return new StatusResponseDto("회원가입 성공!!", HttpStatus.OK);
@@ -50,7 +54,7 @@ public class UserService {
                     () -> new NullPointerException("회원을 찾을 수 없습니다.")
             );
 
-            if (user.getPassword().equals(loginRequestDto.getPassword())) {
+            if (passwordEncoder.matches(loginRequestDto.getPassword(), user.getPassword())) {
                 response.addHeader(JwtUtil.AUTHORIZATION_HEADER, jwtUtil.createToken(user.getUsername(), user.getRole()));
                 return new StatusResponseDto("로그인 성공!!", HttpStatus.OK);
             }
