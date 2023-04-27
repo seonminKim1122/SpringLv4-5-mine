@@ -1,2 +1,4 @@
-API 명세서 및 ERD 설계도 링크
-https://www.notion.so/Assignment3-ef07847818a34fc2b036c38b7a4f1846?pvs=4
+Lv3 -> Lv4 변동사항
+1. 게시글 조회 api : /memo/search/~ 로 수정
+2. SpringSecurity + Jwt 유효성 검증 필터 추가하여 토큰 검증(기존에는 서비스 단에서 토큰에 대한 검증 작업 진행)
+3. 토큰 검증 방식 변경에 따라 컨트롤러 단에서 인증 객체에 담긴 정보를 받아 서비스 단에서 활용
