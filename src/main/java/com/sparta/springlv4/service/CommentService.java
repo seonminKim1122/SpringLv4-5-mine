@@ -60,7 +60,7 @@ public class CommentService {
                     () -> new NullPointerException("존재하지 않는 댓글입니다.")
             );
 
-            if (comment.getUser().getUsername().equals(claims.getSubject()) || ((String)claims.get("auth")).equals(UserRoleEnum.ADMIN.getRole())) {
+            if (comment.getUser().getUsername().equals(claims.getSubject()) || claims.get("auth") == UserRoleEnum.ADMIN) {
                 comment.update(requestDto);
                 return new CommentResponseDto(comment);
             }
@@ -80,7 +80,7 @@ public class CommentService {
                     () -> new NullPointerException("존재하지 않는 댓글입니다.")
             );
 
-            if (comment.getUser().getUsername().equals(claims.getSubject()) || ((String)claims.get("auth")).equals(UserRoleEnum.ADMIN.getRole())) {
+            if (comment.getUser().getUsername().equals(claims.getSubject()) || claims.get("auth") == UserRoleEnum.ADMIN) {
                 commentRepository.delete(comment);
                 return new StatusResponseDto("삭제 성공", HttpStatus.OK);
             }

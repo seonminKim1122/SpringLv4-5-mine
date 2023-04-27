@@ -1,16 +1,21 @@
 package com.sparta.springlv4.entity;
 
 public enum UserRoleEnum {
-    USER("USER"),
-    ADMIN("ADMIN");
+    USER(Authority.USER),
+    ADMIN(Authority.ADMIN);
 
-    private final String role;
+    private final String authority;
 
-    private UserRoleEnum(String role) {
-        this.role = role;
+    private UserRoleEnum(String authority) {
+        this.authority = authority;
     }
 
-    public String getRole() {
-        return this.role;
+    public String getAuthority() {
+        return this.authority;
+    }
+
+    public static class Authority {
+        public static final String USER = "ROLE_USER";
+        public static final String ADMIN = "ROLE_ADMIN";
     }
 }
