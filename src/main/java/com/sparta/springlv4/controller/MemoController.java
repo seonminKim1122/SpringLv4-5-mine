@@ -24,13 +24,13 @@ public class MemoController {
     }
 
     // 전체 게시글 조회하기
-    @GetMapping("/list")
+    @GetMapping("/search/list")
     public List<MemoResponseDto> getAllMemo() {
         return memoService.getAllMemo();
     }
 
     // 특정 게시글 조회하기
-    @GetMapping("/{id}")
+    @GetMapping("/search/{id}")
     public GeneralResponseDto getMemo(@PathVariable Long id) {
         return memoService.getMemo(id);
     }
