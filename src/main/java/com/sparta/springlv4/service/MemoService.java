@@ -27,9 +27,8 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class MemoService {
 
-    private final JwtUtil jwtUtil;
     private final MemoRepository memoRepository;
-    private final UserRepository userRepository;
+
     @Transactional
     public GeneralResponseDto createMemo(MemoRequestDto requestDto, UserDetailsImpl userDetails) {
         User user = userDetails.getUser();
@@ -54,59 +53,42 @@ public class MemoService {
     }
 
     @Transactional
-    public GeneralResponseDto updateMemo(Long id, MemoRequestDto requestDto, HttpServletRequest request) {
-
+    public GeneralResponseDto updateMemo(Long id, MemoRequestDto requestDto, UserDetailsImpl userDetails) {
         try {
-            Claims claims = checkTokenAndGetInfo(request);
             Memo memo = findMemoById(id);
-            if (memo.getUser().getUsername().equals(claims.getSubject()) || (claims.get("auth")).equals(UserRoleEnum.ADMIN.getRole())) {
+
+            if (memo.getUser().getUsername().equals(userDetails.getUsername())) {
                 memo.update(requestDto);
                 return new MemoResponseDto(memo);
             }
 
-            return new StatusResponseDto("직접 작성한 게시글만 수정할 수 있습니다.", HttpStatus.BAD_REQUEST);
+            return new StatusResponseDto("직접 작성한 게시글만 수정 가능합니다.", HttpStatus.BAD_REQUEST);
         } catch (NullPointerException e) {
             return new StatusResponseDto(e.getMessage(), HttpStatus.BAD_REQUEST);
         }
+
 
     }
 
     @Transactional
-    public StatusResponseDto deleteMemo(Long id, HttpServletRequest request) {
-
+    public StatusResponseDto deleteMemo(Long id, UserDetailsImpl userDetails) {
         try {
-            Claims claims = checkTokenAndGetInfo(request);
             Memo memo = findMemoById(id);
 
-            if (memo.getUser().getUsername().equals(claims.getSubject()) || (claims.get("auth")).equals(UserRoleEnum.ADMIN.getRole())) {
+            if (memo.getUser().getUsername().equals(userDetails.getUsername())) {
                 memoRepository.delete(memo);
-                return new StatusResponseDto("삭제 성공!!", HttpStatus.OK);
+                return new StatusResponseDto("삭제 완료", HttpStatus.OK);
             }
 
-            return new StatusResponseDto("직접 작성한 게시글만 삭제할 수 있습니다.", HttpStatus.BAD_REQUEST);
+            return new StatusResponseDto("직접 작성한 게시글만 삭제 가능합니다.", HttpStatus.BAD_REQUEST);
         } catch (NullPointerException e) {
             return new StatusResponseDto(e.getMessage(), HttpStatus.BAD_REQUEST);
         }
-
     }
 
-    public Memo findMemoById(Long id) {
+    public Memo findMemoById(Long id) throws NullPointerException {
         return memoRepository.findById(id).orElseThrow(
-                () -> new NullPointerException("입력하신 id의 게시글이 없습니다.")
+                () -> new NullPointerException("존재하지 않는 게시글입니다.")
         );
-    }
-
-    public User findUserByName(String username) {
-        return userRepository.findById(username).orElseThrow(
-                () -> new NullPointerException("등록되지 않은 사용자입니다.")
-        );
-    }
-
-    public Claims checkTokenAndGetInfo(HttpServletRequest request) throws NullPointerException {
-        Claims claims = jwtUtil.getUserInfoFromToken(jwtUtil.resolveToken(request));
-        if (claims == null) {
-            throw new NullPointerException("토큰이 유효하지 않습니다.");
-        }
-        return claims;
     }
 }

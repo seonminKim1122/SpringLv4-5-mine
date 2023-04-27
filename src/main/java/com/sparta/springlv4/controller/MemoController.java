@@ -39,13 +39,13 @@ public class MemoController {
 
     // 게시글 수정하기
     @PutMapping("/{id}")
-    public GeneralResponseDto updateMemo(@PathVariable Long id, @RequestBody MemoRequestDto requestDto, HttpServletRequest request) {
-        return memoService.updateMemo(id, requestDto, request);
+    public GeneralResponseDto updateMemo(@PathVariable Long id, @RequestBody MemoRequestDto requestDto, @AuthenticationPrincipal UserDetailsImpl userDetails) {
+        return memoService.updateMemo(id, requestDto, userDetails);
     }
 
     // 게시글 삭제하기
     @DeleteMapping("/{id}")
-    public StatusResponseDto deleteMemo(@PathVariable Long id, HttpServletRequest request) {
-        return memoService.deleteMemo(id, request);
+    public StatusResponseDto deleteMemo(@PathVariable Long id, @AuthenticationPrincipal UserDetailsImpl userDetails) {
+        return memoService.deleteMemo(id, userDetails);
     }
 }
