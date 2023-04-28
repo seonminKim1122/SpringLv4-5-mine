@@ -95,7 +95,7 @@ public class CommentService {
                 return new StatusResponseDto("좋아요 취소", HttpStatus.OK);
             }
 
-            CommentLike commentLike = new CommentLike(comment, userDetails.getUser());
+            CommentLike commentLike = new CommentLike(comment, user);
             commentLikeRepository.save(commentLike);
             return new StatusResponseDto("좋아요", HttpStatus.OK);
 

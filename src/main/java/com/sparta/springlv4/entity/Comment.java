@@ -3,7 +3,6 @@ package com.sparta.springlv4.entity;
 import com.sparta.springlv4.dto.CommentRequestDto;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 import javax.persistence.*;
 import java.util.ArrayList;

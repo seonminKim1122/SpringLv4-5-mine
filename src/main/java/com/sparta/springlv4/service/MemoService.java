@@ -5,8 +5,10 @@ import com.sparta.springlv4.dto.MemoRequestDto;
 import com.sparta.springlv4.dto.MemoResponseDto;
 import com.sparta.springlv4.dto.StatusResponseDto;
 import com.sparta.springlv4.entity.Memo;
+import com.sparta.springlv4.entity.MemoLike;
 import com.sparta.springlv4.entity.User;
 import com.sparta.springlv4.entity.UserRoleEnum;
+import com.sparta.springlv4.repository.MemoLikeRepository;
 import com.sparta.springlv4.repository.MemoRepository;
 import com.sparta.springlv4.security.UserDetailsImpl;
 import lombok.RequiredArgsConstructor;
@@ -16,6 +18,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -24,6 +27,7 @@ import java.util.stream.Collectors;
 public class MemoService {
 
     private final MemoRepository memoRepository;
+    private final MemoLikeRepository memoLikeRepository;
 
     @Transactional
     public GeneralResponseDto createMemo(MemoRequestDto requestDto, UserDetailsImpl userDetails) {
@@ -86,5 +90,30 @@ public class MemoService {
         return memoRepository.findById(id).orElseThrow(
                 () -> new NullPointerException("존재하지 않는 게시글입니다.")
         );
+    }
+
+    @Transactional
+    public StatusResponseDto likeMemo(Long id, UserDetailsImpl userDetails) {
+        try {
+            Memo memo = memoRepository.findById(id).orElseThrow(
+                    () -> new NullPointerException("존재하지 않는 게시글입니다.")
+            );
+            User user = userDetails.getUser();
+            // 이미 존재하는 memoLike 정보이고 내가 누른 좋아요면 삭제
+            Optional<MemoLike> found = memoLikeRepository.findMemoLikeByMemoAndUser(memo, user);
+            if(found.isPresent() && found.get().getUser().getUsername().equals(user.getUsername())) {
+                memoLikeRepository.delete(found.get());
+                memo.updateLikes(memo.getLikes() - 1);
+                return new StatusResponseDto("좋아요 취소", HttpStatus.OK);
+            }
+
+            MemoLike memoLike = new MemoLike(memo, user);
+            memoLikeRepository.save(memoLike);
+            return new StatusResponseDto("좋아요", HttpStatus.OK);
+
+        } catch (NullPointerException e) {
+            return new StatusResponseDto(e.getMessage(), HttpStatus.BAD_REQUEST);
+        }
+
     }
 }

@@ -12,6 +12,7 @@ public class MemoResponseDto implements GeneralResponseDto {
     private String name;
     private String content;
     private LocalDate modifiedAt;
+    private Integer likes;
     private List<CommentResponseDto> comments;
 
     public MemoResponseDto(Memo memo) {
@@ -19,6 +20,7 @@ public class MemoResponseDto implements GeneralResponseDto {
         this.name = memo.getUser().getUsername();
         this.content = memo.getContent();
         this.modifiedAt = memo.getModifiedAt().toLocalDate();
+        this.likes = memo.getLikes();
         this.comments = memo.getComments().stream().sorted((c1, c2) -> c2.getModifiedAt().compareTo(c1.getModifiedAt())).map(CommentResponseDto::new).toList();
     }
 }

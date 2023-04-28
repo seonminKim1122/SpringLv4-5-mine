@@ -48,4 +48,9 @@ public class MemoController {
     public StatusResponseDto deleteMemo(@PathVariable Long id, @AuthenticationPrincipal UserDetailsImpl userDetails) {
         return memoService.deleteMemo(id, userDetails);
     }
+
+    @PostMapping("/like/{id}")
+    public StatusResponseDto likeMemo(@PathVariable Long id, @AuthenticationPrincipal UserDetailsImpl userDetails) {
+        return memoService.likeMemo(id, userDetails);
+    }
 }

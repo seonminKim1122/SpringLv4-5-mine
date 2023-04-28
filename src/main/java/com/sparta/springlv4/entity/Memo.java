@@ -25,12 +25,18 @@ public class Memo extends TimeStamped {
     @Column(nullable = false)
     private String content;
 
+    // 게시글 좋아요 갯수
+    private Integer likes = 0;
+
     @ManyToOne
     @JoinColumn(name = "username")
     private User user;
 
     @OneToMany(mappedBy = "memo", fetch = FetchType.EAGER, cascade = CascadeType.REMOVE)
     private List<Comment> comments = new ArrayList<>();
+
+    @OneToMany(mappedBy = "memo")
+    private List<MemoLike> memoLikeList = new ArrayList<>();
 
     public Memo(MemoRequestDto requestDto) {
         this.title = requestDto.getTitle();
@@ -40,5 +46,9 @@ public class Memo extends TimeStamped {
     public void update(MemoRequestDto requestDto) {
         this.title = requestDto.getTitle();
         this.content = requestDto.getContent();
+    }
+
+    public void updateLikes(Integer likes) {
+        this.likes = likes;
     }
 }
