@@ -3,8 +3,11 @@ package com.sparta.springlv4.entity;
 import com.sparta.springlv4.dto.CommentRequestDto;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import javax.persistence.*;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Getter
@@ -25,6 +28,12 @@ public class Comment extends TimeStamped {
     @JoinColumn(name = "username")
     private User user;
 
+    // 댓글 좋아요 갯수
+    private Integer likes = 0;
+
+    @OneToMany(mappedBy = "comment")
+    private List<CommentLike> commentLikeList = new ArrayList<>();
+
     public void setMemo(Memo memo) {
         this.memo = memo;
         memo.getComments().add(this);
@@ -39,5 +48,9 @@ public class Comment extends TimeStamped {
 
     public void update(CommentRequestDto requestDto) {
         this.content = requestDto.getComment();
+    }
+
+    public void updateLikes(Integer likes) {
+        this.likes = likes;
     }
 }

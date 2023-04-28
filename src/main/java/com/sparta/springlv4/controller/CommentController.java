@@ -9,8 +9,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
-import javax.servlet.http.HttpServletRequest;
-
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/comment")
@@ -31,5 +29,10 @@ public class CommentController {
     @DeleteMapping("/{commentId}")
     public StatusResponseDto delete(@PathVariable Long commentId, @AuthenticationPrincipal UserDetailsImpl userDetails) {
         return commentService.delete(commentId, userDetails);
+    }
+
+    @PostMapping("/like/{commentId}")
+    public StatusResponseDto likeComment(@PathVariable Long commentId, @AuthenticationPrincipal UserDetailsImpl userDetails) {
+        return commentService.likeComment(commentId, userDetails);
     }
 }

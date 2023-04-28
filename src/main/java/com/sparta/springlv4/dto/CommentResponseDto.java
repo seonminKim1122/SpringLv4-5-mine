@@ -9,9 +9,11 @@ import java.time.LocalDate;
 public class CommentResponseDto implements GeneralResponseDto {
     private String comment;
     private LocalDate modifiedAt;
+    private Integer likes;
 
     public CommentResponseDto(Comment comment) {
         this.comment = comment.getContent();
         this.modifiedAt = comment.getModifiedAt().toLocalDate();
+        this.likes = comment.getLikes();
     }
 }
