@@ -30,7 +30,7 @@ public class Comment extends TimeStamped {
     // 댓글 좋아요 갯수
     private Integer likes = 0;
 
-    @OneToMany(mappedBy = "comment")
+    @OneToMany(mappedBy = "comment", cascade = CascadeType.REMOVE)
     private List<CommentLike> commentLikeList = new ArrayList<>();
 
     public void setMemo(Memo memo) {

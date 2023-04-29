@@ -5,6 +5,8 @@ import com.sparta.springlv4.dto.CommentResponseDto;
 import com.sparta.springlv4.dto.GeneralResponseDto;
 import com.sparta.springlv4.dto.StatusResponseDto;
 import com.sparta.springlv4.entity.*;
+import com.sparta.springlv4.exception.CustomException;
+import com.sparta.springlv4.exception.ErrorCode;
 import com.sparta.springlv4.repository.CommentLikeRepository;
 import com.sparta.springlv4.repository.CommentRepository;
 import com.sparta.springlv4.repository.MemoRepository;
@@ -26,81 +28,66 @@ public class CommentService {
 
     @Transactional
     public GeneralResponseDto create(Long memoId, CommentRequestDto requestDto, UserDetailsImpl userDetails) {
-        try {
-            Memo memo = memoRepository.findById(memoId).orElseThrow(
-                    () -> new NullPointerException("존재하지 않는 게시글입니다.")
-            );
+        Memo memo = memoRepository.findById(memoId).orElseThrow(
+                () -> new CustomException(ErrorCode.NONEXISTENT_MEMO)
+        );
 
-            Comment comment = new Comment(requestDto);
-            comment.setMemo(memo);
-            comment.setUser(userDetails.getUser());
-            commentRepository.save(comment);
+        Comment comment = new Comment(requestDto);
+        comment.setMemo(memo);
+        comment.setUser(userDetails.getUser());
+        commentRepository.save(comment);
 
-            return new CommentResponseDto(comment);
-        } catch (NullPointerException e) {
-            return new StatusResponseDto(e.getMessage(), HttpStatus.BAD_REQUEST);
-        }
+        return new CommentResponseDto(comment);
     }
 
     @Transactional
     public GeneralResponseDto update(Long commentId, CommentRequestDto requestDto, UserDetailsImpl userDetails) {
-        try {
-            Comment comment = commentRepository.findById(commentId).orElseThrow(
-                    () -> new NullPointerException("존재하지 않는 댓글입니다.")
-            );
 
-            if (comment.getUser().getUsername().equals(userDetails.getUsername()) || userDetails.getUser().getRole() == UserRoleEnum.ADMIN) {
-                comment.update(requestDto);
-                return new CommentResponseDto(comment);
-            }
+        Comment comment = findCommentById(commentId);
 
-            return new StatusResponseDto("작성자만 삭제/수정할 수 있습니다.", HttpStatus.BAD_REQUEST);
-        } catch (NullPointerException e) {
-            return new StatusResponseDto(e.getMessage(), HttpStatus.BAD_REQUEST);
+        if (comment.getUser().getUsername().equals(userDetails.getUsername()) || userDetails.getUser().getRole() == UserRoleEnum.ADMIN) {
+            comment.update(requestDto);
+            return new CommentResponseDto(comment);
+        } else {
+            throw new CustomException(ErrorCode.CANNOT_MODIFY_OR_DELETE);
         }
     }
 
     @Transactional
     public StatusResponseDto delete(Long commentId, UserDetailsImpl userDetails) {
-        try {
-            Comment comment = commentRepository.findById(commentId).orElseThrow(
-                    () -> new NullPointerException("존재하지 않는 댓글입니다.")
-            );
 
-            if (comment.getUser().getUsername().equals(userDetails.getUsername()) || userDetails.getUser().getRole() == UserRoleEnum.ADMIN) {
-                commentRepository.delete(comment);
-                return new StatusResponseDto("삭제 성공", HttpStatus.OK);
-            }
+        Comment comment = findCommentById(commentId);
 
-            return new StatusResponseDto("작성자만 삭제/수정할 수 있습니다.", HttpStatus.BAD_REQUEST);
-        } catch (NullPointerException e) {
-            return new StatusResponseDto(e.getMessage(), HttpStatus.BAD_REQUEST);
+        if (comment.getUser().getUsername().equals(userDetails.getUsername()) || userDetails.getUser().getRole() == UserRoleEnum.ADMIN) {
+            commentRepository.delete(comment);
+            return new StatusResponseDto("삭제 성공", HttpStatus.OK);
+        } else {
+            throw new CustomException(ErrorCode.CANNOT_MODIFY_OR_DELETE);
         }
     }
 
     @Transactional
     public StatusResponseDto likeComment(Long commentId, UserDetailsImpl userDetails) {
-        try {
-            Comment comment = commentRepository.findById(commentId).orElseThrow(
-                    () -> new NullPointerException("존재하지 않는 댓글입니다.")
-            );
-            User user = userDetails.getUser();
+        Comment comment = findCommentById(commentId);
+        User user = userDetails.getUser();
 
-            // 이미 존재하는 commentLike 정보이고 내가 누른 좋아요가 맞으면 삭제
-            Optional<CommentLike> found = commentLikeRepository.findCommentLikeByCommentAndUser(comment, user);
-            if (found.isPresent() && found.get().getUser().getUsername().equals(user.getUsername())) {
-                commentLikeRepository.delete(found.get());
-                // delete 해도 바로 comment.getCommentLikeList() 에서 사라지지 않음. 일단 숫자를 바꾸는 방법으로 해보자.(전자가 가능하게 하는 방법은 없을까??)
-                comment.updateLikes(comment.getLikes() - 1);
-                return new StatusResponseDto("좋아요 취소", HttpStatus.OK);
-            }
-
-            CommentLike commentLike = new CommentLike(comment, user);
-            commentLikeRepository.save(commentLike);
-            return new StatusResponseDto("좋아요", HttpStatus.OK);
-
-        } catch (NullPointerException e) {
-            return new StatusResponseDto(e.getMessage(), HttpStatus.BAD_REQUEST);
+        // 내가 이 댓글에 이미 좋아요를 눌렀으면 좋아요 취소
+        Optional<CommentLike> found = commentLikeRepository.findCommentLikeByCommentAndUser(comment, user);
+        if (found.isPresent()) {
+            commentLikeRepository.delete(found.get());
+            // delete 해도 바로 comment.getCommentLikeList() 에서 사라지지 않음. 일단 숫자를 바꾸는 방법으로 해보자.(전자가 가능하게 하는 방법은 없을까??)
+            comment.updateLikes(comment.getLikes() - 1);
+            return new StatusResponseDto("좋아요 취소", HttpStatus.OK);
         }
+
+        CommentLike commentLike = new CommentLike(comment, user);
+        commentLikeRepository.save(commentLike);
+        return new StatusResponseDto("좋아요", HttpStatus.OK);
+    }
+
+    public Comment findCommentById(Long commentId) {
+        return commentRepository.findById(commentId).orElseThrow(
+                () -> new CustomException(ErrorCode.NONEXISTENT_COMMENT)
+        );
     }
 }

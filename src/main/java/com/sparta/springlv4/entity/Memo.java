@@ -35,7 +35,7 @@ public class Memo extends TimeStamped {
     @OneToMany(mappedBy = "memo", fetch = FetchType.EAGER, cascade = CascadeType.REMOVE)
     private List<Comment> comments = new ArrayList<>();
 
-    @OneToMany(mappedBy = "memo")
+    @OneToMany(mappedBy = "memo", cascade = CascadeType.REMOVE)
     private List<MemoLike> memoLikeList = new ArrayList<>();
 
     public Memo(MemoRequestDto requestDto) {

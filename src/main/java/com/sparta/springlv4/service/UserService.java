@@ -5,6 +5,8 @@ import com.sparta.springlv4.dto.StatusResponseDto;
 import com.sparta.springlv4.dto.SignupRequestDto;
 import com.sparta.springlv4.entity.User;
 import com.sparta.springlv4.entity.UserRoleEnum;
+import com.sparta.springlv4.exception.CustomException;
+import com.sparta.springlv4.exception.ErrorCode;
 import com.sparta.springlv4.repository.UserRepository;
 import com.sparta.springlv4.util.JwtUtil;
 import lombok.RequiredArgsConstructor;
@@ -30,13 +32,13 @@ public class UserService {
         Optional<User> found = userRepository.findById(signupRequestDto.getUsername());
 
         if (found.isPresent()) {
-            return new StatusResponseDto("중복된 username 입니다.", HttpStatus.BAD_REQUEST);
+            throw new CustomException(ErrorCode.ALREADY_ENROLLED);
         }
 
         UserRoleEnum role = UserRoleEnum.USER;
         if (signupRequestDto.isAdmin()) {
             if(!signupRequestDto.getAdminToken().equals(ADMIN_TOKEN)) {
-                return new StatusResponseDto("관리자 암호가 틀려 등록이 불가능합니다.", HttpStatus.BAD_REQUEST);
+                throw new CustomException(ErrorCode.WRONG_ADMIN_PASSWORD);
             }
             role = UserRoleEnum.ADMIN;
         }
@@ -49,18 +51,15 @@ public class UserService {
     }
 
     public StatusResponseDto login(LoginRequestDto loginRequestDto, HttpServletResponse response) {
-        try {
-            User user = userRepository.findById(loginRequestDto.getUsername()).orElseThrow(
-                    () -> new NullPointerException("회원을 찾을 수 없습니다.")
-            );
+        User user = userRepository.findById(loginRequestDto.getUsername()).orElseThrow(
+                () -> new CustomException(ErrorCode.WRONG_USER_ID)
+        );
 
-            if (passwordEncoder.matches(loginRequestDto.getPassword(), user.getPassword())) {
-                response.addHeader(JwtUtil.AUTHORIZATION_HEADER, jwtUtil.createToken(user.getUsername(), user.getRole()));
-                return new StatusResponseDto("로그인 성공!!", HttpStatus.OK);
-            }
-            return new StatusResponseDto("비밀번호가 일치하지 않습니다.", HttpStatus.BAD_REQUEST);
-        } catch(NullPointerException e) {
-            return new StatusResponseDto(e.getMessage(), HttpStatus.BAD_REQUEST);
+        if (!passwordEncoder.matches(loginRequestDto.getPassword(), user.getPassword())) {
+            throw new CustomException(ErrorCode.WRONG_USER_PASSWORD);
+        } else {
+            response.addHeader(JwtUtil.AUTHORIZATION_HEADER, jwtUtil.createToken(user.getUsername(), user.getRole()));
+            return new StatusResponseDto("로그인 성공!!", HttpStatus.OK);
         }
     }
 }

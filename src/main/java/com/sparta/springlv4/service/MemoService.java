@@ -8,6 +8,8 @@ import com.sparta.springlv4.entity.Memo;
 import com.sparta.springlv4.entity.MemoLike;
 import com.sparta.springlv4.entity.User;
 import com.sparta.springlv4.entity.UserRoleEnum;
+import com.sparta.springlv4.exception.CustomException;
+import com.sparta.springlv4.exception.ErrorCode;
 import com.sparta.springlv4.repository.MemoLikeRepository;
 import com.sparta.springlv4.repository.MemoRepository;
 import com.sparta.springlv4.security.UserDetailsImpl;
@@ -44,76 +46,56 @@ public class MemoService {
     }
 
     public GeneralResponseDto getMemo(Long id) {
-        try {
-            Memo memo = findMemoById(id);
-            return new MemoResponseDto(memo);
-        } catch (NullPointerException e){
-            return new StatusResponseDto(e.getMessage(), HttpStatus.BAD_REQUEST);
-        }
+        Memo memo = findMemoById(id);
+        return new MemoResponseDto(memo);
     }
 
     @Transactional
     public GeneralResponseDto updateMemo(Long id, MemoRequestDto requestDto, UserDetailsImpl userDetails) {
-        try {
-            Memo memo = findMemoById(id);
 
-            if (memo.getUser().getUsername().equals(userDetails.getUsername()) || userDetails.getUser().getRole() == UserRoleEnum.ADMIN) {
-                memo.update(requestDto);
-                return new MemoResponseDto(memo);
-            }
+        Memo memo = findMemoById(id);
 
-            return new StatusResponseDto("직접 작성한 게시글만 수정 가능합니다.", HttpStatus.BAD_REQUEST);
-        } catch (NullPointerException e) {
-            return new StatusResponseDto(e.getMessage(), HttpStatus.BAD_REQUEST);
+        if (memo.getUser().getUsername().equals(userDetails.getUsername()) || userDetails.getUser().getRole() == UserRoleEnum.ADMIN) {
+            memo.update(requestDto);
+            return new MemoResponseDto(memo);
+        } else {
+            throw new CustomException(ErrorCode.CANNOT_MODIFY_OR_DELETE);
         }
-
-
     }
 
     @Transactional
     public StatusResponseDto deleteMemo(Long id, UserDetailsImpl userDetails) {
-        try {
-            Memo memo = findMemoById(id);
+        Memo memo = findMemoById(id);
 
-            if (memo.getUser().getUsername().equals(userDetails.getUsername()) || userDetails.getUser().getRole() == UserRoleEnum.ADMIN) {
-                memoRepository.delete(memo);
-                return new StatusResponseDto("삭제 완료", HttpStatus.OK);
-            }
-
-            return new StatusResponseDto("직접 작성한 게시글만 삭제 가능합니다.", HttpStatus.BAD_REQUEST);
-        } catch (NullPointerException e) {
-            return new StatusResponseDto(e.getMessage(), HttpStatus.BAD_REQUEST);
+        if (memo.getUser().getUsername().equals(userDetails.getUsername()) || userDetails.getUser().getRole() == UserRoleEnum.ADMIN) {
+            memoRepository.delete(memo);
+            return new StatusResponseDto("삭제 완료", HttpStatus.OK);
+        } else {
+            throw new CustomException(ErrorCode.CANNOT_MODIFY_OR_DELETE);
         }
-    }
-
-    public Memo findMemoById(Long id) throws NullPointerException {
-        return memoRepository.findById(id).orElseThrow(
-                () -> new NullPointerException("존재하지 않는 게시글입니다.")
-        );
     }
 
     @Transactional
     public StatusResponseDto likeMemo(Long id, UserDetailsImpl userDetails) {
-        try {
-            Memo memo = memoRepository.findById(id).orElseThrow(
-                    () -> new NullPointerException("존재하지 않는 게시글입니다.")
-            );
-            User user = userDetails.getUser();
-            // 이미 존재하는 memoLike 정보이고 내가 누른 좋아요면 삭제
-            Optional<MemoLike> found = memoLikeRepository.findMemoLikeByMemoAndUser(memo, user);
-            if(found.isPresent() && found.get().getUser().getUsername().equals(user.getUsername())) {
-                memoLikeRepository.delete(found.get());
-                memo.updateLikes(memo.getLikes() - 1);
-                return new StatusResponseDto("좋아요 취소", HttpStatus.OK);
-            }
 
-            MemoLike memoLike = new MemoLike(memo, user);
-            memoLikeRepository.save(memoLike);
-            return new StatusResponseDto("좋아요", HttpStatus.OK);
-
-        } catch (NullPointerException e) {
-            return new StatusResponseDto(e.getMessage(), HttpStatus.BAD_REQUEST);
+        Memo memo = findMemoById(id);
+        User user = userDetails.getUser();
+        // 이미 존재하는 memoLike 정보이고 내가 누른 좋아요면 삭제
+        Optional<MemoLike> found = memoLikeRepository.findMemoLikeByMemoAndUser(memo, user);
+        if(found.isPresent()) {
+            memoLikeRepository.delete(found.get());
+            memo.updateLikes(memo.getLikes() - 1);
+            return new StatusResponseDto("좋아요 취소", HttpStatus.OK);
         }
 
+        MemoLike memoLike = new MemoLike(memo, user);
+        memoLikeRepository.save(memoLike);
+        return new StatusResponseDto("좋아요", HttpStatus.OK);
+    }
+
+    public Memo findMemoById(Long id) throws NullPointerException {
+        return memoRepository.findById(id).orElseThrow(
+                () -> new CustomException(ErrorCode.NONEXISTENT_MEMO)
+        );
     }
 }

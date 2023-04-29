@@ -32,7 +32,8 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             if (!jwtUtil.validationToken(token)) { // 토큰이 유효하지 않을 때
                 response.setStatus(HttpStatus.UNAUTHORIZED.value());
                 response.setContentType("application/json");
-                String json = new ObjectMapper().writeValueAsString(new SecurityExceptionDto(HttpStatus.UNAUTHORIZED.value(), "Token Error"));
+                response.setCharacterEncoding("UTF-8"); // JSON 한글 깨짐 현상 해결
+                String json = new ObjectMapper().writeValueAsString(new SecurityExceptionDto(HttpStatus.UNAUTHORIZED.value(), "토큰이 유효하지 않습니다."));
                 response.getWriter().write(json);
                 return;
             }

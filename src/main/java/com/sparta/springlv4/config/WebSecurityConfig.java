@@ -1,5 +1,6 @@
 package com.sparta.springlv4.config;
 
+import com.sparta.springlv4.security.CustomAuthenticationEntryPoint;
 import com.sparta.springlv4.security.JwtAuthFilter;
 import com.sparta.springlv4.security.UserDetailsServiceImpl;
 import com.sparta.springlv4.util.JwtUtil;
@@ -23,6 +24,7 @@ public class WebSecurityConfig {
 
     private final JwtUtil jwtUtil;
     private final UserDetailsServiceImpl userDetailsService;
+    private final CustomAuthenticationEntryPoint customAuthenticationEntryPoint;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -51,7 +53,8 @@ public class WebSecurityConfig {
                 // JWT 유효성 검사 필터 추가
                 .and().addFilterBefore(new JwtAuthFilter(jwtUtil, userDetailsService), UsernamePasswordAuthenticationFilter.class);
 
-        http.formLogin();
+        // 토큰이 필요한 요청에 토큰 null 일 경우 처리
+        http.exceptionHandling().authenticationEntryPoint(customAuthenticationEntryPoint);
 
         return http.build();
     }
